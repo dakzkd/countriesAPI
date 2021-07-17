@@ -4,6 +4,9 @@ const btn = document.querySelector('.btn-country');
 const countriesContainer = document.querySelector('.countries');
 
 ///////////////////////////////////////
+const renderError = function (msg) {
+  countriesContainer.insertAdjacentText('beforeend', msg);
+};
 
 const renderCountry = function (data, className) {
   const html = `
@@ -23,7 +26,6 @@ const renderCountry = function (data, className) {
         </article>`;
 
   countriesContainer.insertAdjacentHTML('beforeend', html);
-  countriesContainer.style.opacity = 1;
 };
 
 // const getCountryAndNeighbor = function (country) {
@@ -74,23 +76,47 @@ const renderCountry = function (data, className) {
 // console.log(request);
 
 // FETCH
-const getCountryData = function (country) {
-  // Country 1
-  fetch(`https://restcountries.eu/rest/v2/name/${country}`)
-    .then(response => response.json())
-    .then(data => {
-      renderCountry(data[0]);
-      const neighbour = data[0].borders[0];
 
-      if (!neighbour) return;
+const getJSON = function (url, errorMsg = 'Something went wrong') {
+  return fetch(url).then(response => {
+    if (!response.ok) {
+      throw new Error(`${errorMsg} ${response.status}`);
+    }
 
-      //Country 2. neighbour country
-      return fetch(`https://restcountries.eu/rest/v2/alpha/${neighbour}`);
-    })
-    .then(response => response.json())
-    .then(data => renderCountry(data, 'neighbour'));
+    return response.json();
+  });
 };
 
-getCountryData('germany');
+const getCountryData = function (country) {
+  // Country 1
+  getJSON(
+    `https://restcountries.eu/rest/v2/name/${country}`,
+    'Country not found'
+  )
+    .then(data => {
+      console.log(data);
+      renderCountry(data[0]);
+      const neighbour = data[0].borders[0];
+      console.log(neighbour);
+      if (!neighbour) throw new Error('No neighbour found!');
 
-// Chaining promises
+      //Country 2. neighbour country
+      return getJSON(
+        `https://restcountries.eu/rest/v2/alpha/${neighbour}`,
+        'Country not found'
+      );
+    })
+    .then(data => renderCountry(data, 'neighbour'))
+    .catch(err => {
+      renderError(`Something went wrong 🎇🎇🎇 ${err.message}. Try again!`);
+      console.error(`${err} 🎇🎇🎇 `);
+      renderError(`Somthing went wrong ${err.message}. Try again!`);
+    })
+    .finally(() => {
+      countriesContainer.style.opacity = 1;
+    });
+};
+
+btn.addEventListener('click', function () {
+  getCountryData('germany');
+});
