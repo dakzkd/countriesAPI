@@ -26,6 +26,7 @@ const renderCountry = function (data, className) {
         </article>`;
 
   countriesContainer.insertAdjacentHTML('beforeend', html);
+  countriesContainer.style.opacity = 1;
 };
 
 // const getCountryAndNeighbor = function (country) {
@@ -77,46 +78,142 @@ const renderCountry = function (data, className) {
 
 // FETCH
 
-const getJSON = function (url, errorMsg = 'Something went wrong') {
-  return fetch(url).then(response => {
-    if (!response.ok) {
-      throw new Error(`${errorMsg} ${response.status}`);
-    }
+// const getJSON = function (url, errorMsg = 'Something went wrong') {
+//   return fetch(url).then(response => {
+//     if (!response.ok) {
+//       throw new Error(`${errorMsg} ${response.status}`);
+//     }
 
-    return response.json();
+//     return response.json();
+//   });
+// };
+
+// const getCountryData = function (country) {
+//   // Country 1
+//   getJSON(
+//     `https://restcountries.eu/rest/v2/name/${country}`,
+//     'Country not found'
+//   )
+//     .then(data => {
+//       console.log(data);
+//       renderCountry(data[0]);
+//       const neighbour = data[0].borders[0];
+//       console.log(neighbour);
+//       if (!neighbour) throw new Error('No neighbour found!');
+
+//       //Country 2. neighbour country
+//       return getJSON(
+//         `https://restcountries.eu/rest/v2/alpha/${neighbour}`,
+//         'Country not found'
+//       );
+//     })
+//     .then(data => renderCountry(data, 'neighbour'))
+//     .catch(err => {
+//       renderError(`Something went wrong 🎇🎇🎇 ${err.message}. Try again!`);
+//       console.error(`${err} 🎇🎇🎇 `);
+//       renderError(`Somthing went wrong ${err.message}. Try again!`);
+//     })
+//     .finally(() => {
+//       countriesContainer.style.opacity = 1;
+//     });
+// };
+
+// btn.addEventListener('click', function () {
+//   getCountryData('germany');
+// });
+
+// const whereAmI = function (lat, lng) {
+//   fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`)
+//     .then(res => {
+//       console.log(res);
+//       if (!res.ok) throw new Error(`Problem with geocoding ${res.status}`);
+//       return res.json();
+//     })
+//     .then(data => {
+//       console.log(data);
+//       // console.log(`You are in ${data.city}, ${data.country}`);
+//     })
+//     .catch(err => console.error(`${err.message}`));
+// };
+
+// whereAmI(52.508, 13.381);
+// whereAmI(19.037, 72.873);
+// whereAmI(-33.933, 18.474);
+
+// console.log('Test start');
+// setTimeout(() => console.log('0 sec timer'), 0);
+// Promise.resolve('Resolved promise 1').then(res => console.log(res));
+
+// Promise.resolve('Resolved promise 2').then(res => {
+//   for (let i = 0; i < 1000000; i++) {}
+//   console.log(res);
+// });
+// console.log('Test end');
+
+// const lotteryPromise = new Promise(function (resolve, reject) {
+//   console.log(`Lottery draw  is happening`);
+
+//   setTimeout(function () {
+//     if (Math.random() >= 0.5) {
+//       resolve('You WIN 💰');
+//     } else {
+//       reject('You lost 😭');
+//     }
+//   }, 2000);
+// });
+
+// lotteryPromise.then(res => console.log(res)).catch(err => console.log(err));
+
+// const wait = seconds => {
+//   return new Promise(function (resolve) {
+//     setTimeout(resolve, seconds * 1000);
+//   });
+// };
+
+// wait(2).then(() => {
+//   console.log('I waited for 2 seconds');
+//   return wait(1);
+// });
+
+console.log('Getting position');
+
+const getPosition = function () {
+  return new Promise(function (resolve, reject) {
+    //   navigator.geolocation.getCurrentPosition(
+    //     position => resolve(position),
+    //     err => reject(err)
+    //   );
+    navigator.geolocation.getCurrentPosition(resolve, reject);
   });
 };
 
-const getCountryData = function (country) {
-  // Country 1
-  getJSON(
-    `https://restcountries.eu/rest/v2/name/${country}`,
-    'Country not found'
-  )
+getPosition().then(pos => console.log(pos));
+
+const whereAmI = function () {
+  getPosition()
+    .then(pos => {
+      console.log(pos.coords);
+      const { latitude: lat, longitude: lng } = pos.coords;
+      return fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`);
+    })
+    .then(res => {
+      console.log(res);
+      if (!res.ok) throw new Error(`Problem with geocoding ${res.status}`);
+      return res.json();
+    })
     .then(data => {
       console.log(data);
-      renderCountry(data[0]);
-      const neighbour = data[0].borders[0];
-      console.log(neighbour);
-      if (!neighbour) throw new Error('No neighbour found!');
+      console.log(`You are in ${data.city}, ${data.country}`);
 
-      //Country 2. neighbour country
-      return getJSON(
-        `https://restcountries.eu/rest/v2/alpha/${neighbour}`,
-        'Country not found'
-      );
+      return fetch(`https://restcountries.eu/rest/v2/name/${data.country}`);
     })
-    .then(data => renderCountry(data, 'neighbour'))
-    .catch(err => {
-      renderError(`Something went wrong 🎇🎇🎇 ${err.message}. Try again!`);
-      console.error(`${err} 🎇🎇🎇 `);
-      renderError(`Somthing went wrong ${err.message}. Try again!`);
+    .then(res => {
+      if (!res.ok) throw new Error(`Country not found ${res.status}`);
+
+      return res.json();
     })
-    .finally(() => {
-      countriesContainer.style.opacity = 1;
-    });
+    .then(data => renderCountry(data[0]))
+    .catch(err => console.error(`${err.message}`));
 };
 
-btn.addEventListener('click', function () {
-  getCountryData('germany');
-});
+btn.addEventListener('click', whereAmI);
