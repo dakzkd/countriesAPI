@@ -6,6 +6,7 @@ const countriesContainer = document.querySelector('.countries');
 ///////////////////////////////////////
 const renderError = function (msg) {
   countriesContainer.insertAdjacentText('beforeend', msg);
+  countriesContainer.style.opacity = 1;
 };
 
 const renderCountry = function (data, className) {
@@ -175,45 +176,74 @@ const renderCountry = function (data, className) {
 //   return wait(1);
 // });
 
-console.log('Getting position');
+// console.log('Getting position');
+
+// const getPosition = function () {
+//   return new Promise(function (resolve, reject) {
+//     //   navigator.geolocation.getCurrentPosition(
+//     //     position => resolve(position),
+//     //     err => reject(err)
+//     //   );
+//     navigator.geolocation.getCurrentPosition(resolve, reject);
+//   });
+// };
+
+// // getPosition().then(pos => console.log(pos));
+
+// const whereAmI = function () {
+//   getPosition()
+//     .then(pos => {
+//       console.log(pos.coords);
+//       const { latitude: lat, longitude: lng } = pos.coords;
+//       return fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`);
+//     })
+//     .then(res => {
+//       console.log(res);
+//       if (!res.ok) throw new Error(`Problem with geocoding ${res.status}`);
+//       return res.json();
+//     })
+//     .then(data => {
+//       console.log(data);
+//       console.log(`You are in ${data.city}, ${data.country}`);
+
+//       return fetch(`https://restcountries.eu/rest/v2/name/${data.country}`);
+//     })
+//     .then(res => {
+//       if (!res.ok) throw new Error(`Country not found ${res.status}`);
+
+//       return res.json();
+//     })
+//     .then(data => renderCountry(data[0]))
+//     .catch(err => console.error(`${err.message}`));
+// };
+
+// btn.addEventListener('click', whereAmI);
 
 const getPosition = function () {
   return new Promise(function (resolve, reject) {
-    //   navigator.geolocation.getCurrentPosition(
-    //     position => resolve(position),
-    //     err => reject(err)
-    //   );
     navigator.geolocation.getCurrentPosition(resolve, reject);
   });
 };
 
-getPosition().then(pos => console.log(pos));
-
-const whereAmI = function () {
-  getPosition()
-    .then(pos => {
-      console.log(pos.coords);
-      const { latitude: lat, longitude: lng } = pos.coords;
-      return fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`);
-    })
-    .then(res => {
-      console.log(res);
-      if (!res.ok) throw new Error(`Problem with geocoding ${res.status}`);
-      return res.json();
-    })
-    .then(data => {
-      console.log(data);
-      console.log(`You are in ${data.city}, ${data.country}`);
-
-      return fetch(`https://restcountries.eu/rest/v2/name/${data.country}`);
-    })
-    .then(res => {
-      if (!res.ok) throw new Error(`Country not found ${res.status}`);
-
-      return res.json();
-    })
-    .then(data => renderCountry(data[0]))
-    .catch(err => console.error(`${err.message}`));
+const whereAmI = async function () {
+  try {
+    const pos = await getPosition();
+    console.log(pos);
+    const { latitude: lat, longitude: lng } = pos.coords;
+    const resGeo = await fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`);
+    if (!resGeo.ok) throw new Error('Problem getting location data');
+    const dataGeo = await resGeo.json();
+    console.log(dataGeo);
+    const res = await fetch(
+      `https://restcountries.eu/rest/v2/name/${dataGeo.country}`
+    );
+    if (!res.ok) throw new Error('Problem getting location data');
+    const data = await res.json();
+    renderCountry(data[0]);
+  } catch (err) {
+    console.error(err);
+    renderError(`tttttt ${err}`);
+  }
 };
-
-btn.addEventListener('click', whereAmI);
+whereAmI();
+console.log('FIRST');
