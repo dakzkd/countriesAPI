@@ -79,15 +79,15 @@ const renderCountry = function (data, className) {
 
 // FETCH
 
-// const getJSON = function (url, errorMsg = 'Something went wrong') {
-//   return fetch(url).then(response => {
-//     if (!response.ok) {
-//       throw new Error(`${errorMsg} ${response.status}`);
-//     }
+const getJSON = function (url, errorMsg = 'Something went wrong') {
+  return fetch(url).then(response => {
+    if (!response.ok) {
+      throw new Error(`${errorMsg} ${response.status}`);
+    }
 
-//     return response.json();
-//   });
-// };
+    return response.json();
+  });
+};
 
 // const getCountryData = function (country) {
 //   // Country 1
@@ -225,25 +225,51 @@ const getPosition = function () {
   });
 };
 
-const whereAmI = async function () {
+// const whereAmI = async function () {
+//   try {
+//     const pos = await getPosition();
+//     console.log(pos);
+//     const { latitude: lat, longitude: lng } = pos.coords;
+//     const resGeo = await fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`);
+//     if (!resGeo.ok) throw new Error('Problem getting location data');
+//     const dataGeo = await resGeo.json();
+//     console.log(dataGeo);
+//     const res = await fetch(
+//       `https://restcountries.eu/rest/v2/name/${dataGeo.country}`
+//     );
+//     if (!res.ok) throw new Error('Problem getting location data');
+//     const data = await res.json();
+//     renderCountry(data[0]);
+//     return `You are in ${dataGeo}, ${dataGeo.country}`;
+//   } catch (err) {
+//     console.error(err);
+//     renderError(`tttttt ${err}`);
+//   }
+// };
+
+// (async function () {
+//   try {
+//     const city = await whereAmI();
+//     console.log(city);
+//   } catch (error) {
+//     console.log(error);
+//   }
+// })();
+
+// console.log('FIRST');
+
+const get3Counties = async function (c1, c2, c3) {
   try {
-    const pos = await getPosition();
-    console.log(pos);
-    const { latitude: lat, longitude: lng } = pos.coords;
-    const resGeo = await fetch(`https://geocode.xyz/${lat},${lng}?geoit=json`);
-    if (!resGeo.ok) throw new Error('Problem getting location data');
-    const dataGeo = await resGeo.json();
-    console.log(dataGeo);
-    const res = await fetch(
-      `https://restcountries.eu/rest/v2/name/${dataGeo.country}`
-    );
-    if (!res.ok) throw new Error('Problem getting location data');
-    const data = await res.json();
-    renderCountry(data[0]);
-  } catch (err) {
-    console.error(err);
-    renderError(`tttttt ${err}`);
+    const data = await Promise.all([
+      getJSON(`https://restcountries.eu/rest/v2/name/${c1}`),
+      getJSON(`https://restcountries.eu/rest/v2/name/${c2}`),
+      getJSON(`https://restcountries.eu/rest/v2/name/${c3}`),
+    ]);
+
+    console.log(data.map(d => d[0].capital));
+  } catch (error) {
+    console.error(error);
   }
 };
-whereAmI();
-console.log('FIRST');
+
+get3Counties('kazakhstan', 'portugal', 'china');
